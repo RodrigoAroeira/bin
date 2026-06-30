@@ -31,7 +31,10 @@ pub enum Command {
     /// Move registered binary to a new path
     Move { name: String, new_path: PathBuf },
     /// Register binary in the database
-    Adopt { path: PathBuf },
+    Adopt {
+        #[arg(value_parser = path_parser)]
+        path: PathBuf,
+    },
     /// List all binaries in the database
     List,
 }
