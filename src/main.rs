@@ -145,7 +145,6 @@ fn in_path<P>(path: P) -> Result<bool>
 where
     P: AsRef<Path>,
 {
-    // TODO: Convert path to absolute
     let normalized: PathBuf = path.as_ref().components().collect();
     let env_path = match std::env::var("PATH") {
         Ok(env_path) => env_path,
@@ -164,8 +163,6 @@ where
 }
 
 fn download(url: &str) -> Result<(String, TempDir)> {
-    // TODO: Somehow grab where it installed to, so it gets the actual installed bin
-    // -O <NAME> messes up if subcommand install.name == None
     let tmp = TempDir::new("mgr")?;
     let status = std::process::Command::new("wget")
         .args(["-q", "-P", &tmp.path().display().to_string(), url])
