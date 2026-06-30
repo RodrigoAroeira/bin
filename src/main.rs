@@ -1,3 +1,4 @@
+use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
@@ -111,11 +112,22 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+fn make_executable<P>(path: P) -> std::io::Result<()>
+where
+    P: AsRef<Path>,
+{
+    let metadata = std::fs::metadata(&path)?;
+    let mut permissions = metadata.permissions();
+    permissions.set_mode(permissions.mode() | 0o111);
+    std::fs::set_permissions(&path, permissions)
+}
+
 fn install<P>(file_path: P, new_path: P, copy: bool) -> std::io::Result<()>
 where
     P: AsRef<Path>,
 {
-    std::fs::copy(&file_path, new_path)?;
+    std::fs::copy(&file_path, &new_path)?;
+    make_executable(&new_path)?;
     if !copy && let Err(e) = std::fs::remove_file(&file_path) {
         eprintln!("Warning: could not remove source file: {e}");
     }
