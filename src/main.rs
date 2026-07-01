@@ -1,4 +1,3 @@
-use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
@@ -6,6 +5,7 @@ use clap::Parser;
 
 mod cli;
 mod db;
+mod util;
 
 use cli::Command;
 use tempdir::TempDir;
@@ -29,7 +29,7 @@ fn main() -> Result<()> {
                 None
             };
 
-            let file_path = expanduser::expanduser(&file_path)?;
+            let file_path = util::resolve_path(&file_path)?;
 
             let name = match name {
                 Some(name) => name,
@@ -89,8 +89,7 @@ fn main() -> Result<()> {
                 .bins()
                 .get(&name)
                 .with_context(|| format!("`{name}` is not a registered binary"))?;
-            let new_path =
-                std::path::absolute(expanduser::expanduser(new_path.to_string_lossy())?)?;
+            let new_path = util::resolve_path(&new_path.to_string_lossy())?;
             let new_path = new_path.join(&name);
             install(old_path, &new_path, false).context("Move")?;
             println!("Moved `{name}` to {}", new_path.display());
@@ -124,22 +123,12 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn make_executable<P>(path: P) -> std::io::Result<()>
-where
-    P: AsRef<Path>,
-{
-    let metadata = std::fs::metadata(&path)?;
-    let mut permissions = metadata.permissions();
-    permissions.set_mode(permissions.mode() | 0o111);
-    std::fs::set_permissions(&path, permissions)
-}
-
 fn install<P>(file_path: P, new_path: P, copy: bool) -> std::io::Result<()>
 where
     P: AsRef<Path>,
 {
     std::fs::copy(&file_path, &new_path)?;
-    make_executable(&new_path)?;
+    util::make_executable(&new_path)?;
     if !copy && let Err(e) = std::fs::remove_file(&file_path) {
         eprintln!("Warning: could not remove source file: {e}");
     }

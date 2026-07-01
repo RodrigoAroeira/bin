@@ -1,4 +1,4 @@
-use std::path::{PathBuf, absolute};
+use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 
@@ -42,6 +42,5 @@ pub enum Command {
 }
 
 fn path_parser(s: &str) -> anyhow::Result<PathBuf> {
-    let path = absolute(expanduser::expanduser(s)?)?;
-    Ok(path)
+    crate::util::resolve_path(s)
 }
