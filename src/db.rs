@@ -23,6 +23,12 @@ impl Database {
         &self.bins
     }
 
+    pub fn get_entry(&self, name: &str) -> Result<&PathBuf> {
+        self.bins
+            .get(name)
+            .with_context(|| format!("`{name}` is not a registered binary"))
+    }
+
     pub fn load() -> Result<Self> {
         let path = get_database_path()?;
         if !path.exists() {

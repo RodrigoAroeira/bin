@@ -54,10 +54,7 @@ fn main() -> Result<()> {
             )
         }
         Command::Uninstall { name } => {
-            let path = database
-                .bins()
-                .get(&name)
-                .with_context(|| format!("Unable to get path for '{name}'"))?;
+            let path = database.get_entry(&name)?;
             uninstall(path.as_path())?;
             database.remove_entry(&name)?;
         }
@@ -71,10 +68,7 @@ fn main() -> Result<()> {
             }
         }
         Command::Rename { old_name, new_name } => {
-            let old_path = database
-                .bins()
-                .get(&old_name)
-                .with_context(|| format!("`{old_name}` is not a registered binary"))?;
+            let old_path = database.get_entry(&old_name)?;
             let new_path = old_path
                 .parent()
                 .context("Unable to determine parent directory")?
@@ -85,10 +79,7 @@ fn main() -> Result<()> {
             println!("Renamed `{old_name}` to `{}`", new_path.display());
         }
         Command::Move { name, new_path } => {
-            let old_path = database
-                .bins()
-                .get(&name)
-                .with_context(|| format!("`{name}` is not a registered binary"))?;
+            let old_path = database.get_entry(&name)?;
             let new_path = util::resolve_path(&new_path.to_string_lossy())?;
             let new_path = new_path.join(&name);
             install(old_path, &new_path, false).context("Move")?;
@@ -107,12 +98,7 @@ fn main() -> Result<()> {
             database.add_entry(name, path);
         }
         Command::Run { name, args } => {
-            let program = database.bins().get(&name).with_context(|| {
-                format!(
-                    "{name} not found in database. Run {} list to see registered binaries.",
-                    std::env::args().nth(1).unwrap()
-                )
-            })?;
+            let program = database.get_entry(&name)?;
             std::process::Command::new(program)
                 .args(args)
                 .spawn()
