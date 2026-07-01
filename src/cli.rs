@@ -35,6 +35,8 @@ pub enum Command {
         #[arg(value_parser = path_parser)]
         path: PathBuf,
     },
+    /// Run binary registered in database
+    Run { name: String, args: Vec<String> },
     /// List all binaries in the database
     List,
 }

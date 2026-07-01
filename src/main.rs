@@ -107,6 +107,18 @@ fn main() -> Result<()> {
                 .to_string();
             database.add_entry(name, path);
         }
+        Command::Run { name, args } => {
+            let program = database.bins().get(&name).with_context(|| {
+                format!(
+                    "{name} not found in database. Run {} list to see registered binaries.",
+                    std::env::args().nth(1).unwrap()
+                )
+            })?;
+            std::process::Command::new(program)
+                .args(args)
+                .spawn()
+                .and_then(|mut c| c.wait())?;
+        }
     }
     database.save()?;
     Ok(())
