@@ -57,6 +57,7 @@ fn main() -> Result<()> {
             let path = database.get_entry(&name)?;
             uninstall(path.as_path())?;
             database.remove_entry(&name)?;
+            println!("Uninstalled `{name}`");
         }
         Command::List => {
             if database.bins().is_empty() {
@@ -83,8 +84,9 @@ fn main() -> Result<()> {
             let new_path = util::resolve_path(&new_path.to_string_lossy())?;
             let new_path = new_path.join(&name);
             install(old_path, &new_path, false).context("Move")?;
+            database.remove_entry(&name)?;
+            database.add_entry(name.clone(), &new_path);
             println!("Moved `{name}` to {}", new_path.display());
-            database.add_entry(name, &new_path);
         }
         Command::Adopt { path } => {
             if !path.exists() {
@@ -95,7 +97,8 @@ fn main() -> Result<()> {
                 .and_then(|s| s.to_str())
                 .context("Unable to get filename from given path")?
                 .to_string();
-            database.add_entry(name, path);
+            database.add_entry(name.clone(), &path);
+            println!("Adopted `{name}` from {}", path.display());
         }
         Command::Run { name, args } => {
             let program = database.get_entry(&name)?;
